@@ -66,7 +66,7 @@ class Geometry:
     y:float=0.0 # y coordinate
     hdg:float=0.0 # heading
     length:float=0.0 # length
-    sample_points:List[Point3d]=field(default_factory=list) # sample points
+    refline_sample_points:List[Point3d]=field(default_factory=list) # sample points
 
     straight:Line_Straight=field(default_factory=Line_Straight) # straight parameters
     spiral:Line_Spiral=field(default_factory=Line_Spiral) # spiral parameters

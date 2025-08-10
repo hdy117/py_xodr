@@ -29,4 +29,5 @@ if __name__ == "__main__":
         logging.error(f"Failed to parse xodr file: {xodr_file}")
         sys.exit(1)
     else:
+        road_network.sample_roads()
         logging.info(f"XODR file parsed successfully: {xodr_file}")

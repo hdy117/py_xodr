@@ -1,10 +1,10 @@
 import os
-import sys
 import constants
 import logging
-import road
 from lxml import etree
 from typing import List
+import geometry_math
+import matplotlib.pyplot as plt
 
 class RoadNetwork:
     def __init__(self, xodr_file:str=""):
@@ -216,7 +216,62 @@ class RoadNetwork:
             junctions.append(junction_obj)
         return junctions
            
-    
     def sample_roads(self, delta_step:float=0.1):
-        pass
+        x_list=[]
+        y_list=[]
+        for road in self.odr_doc['roads']:    
+            # sample refline of a road, from st coordinates to xy coordinates
+            for geometry in road.planview.geometry_list:
+                if geometry.ref_line_type == constants.LineType.LINE_STRAIGHT:
+                    s=0.0
+                    s_max=geometry.length
+                    while s < s_max:
+                        x,y=geometry_math.st_to_xy_line(s,0.0,geometry.x,geometry.y,geometry.hdg,geometry.length)
+                        s+=delta_step
+                        point_3d=constants.Point3d()
+                        point_3d.x=x
+                        point_3d.y=y
+                        point_3d.z=0.0
+                        geometry.refline_sample_points.append(point_3d)
+                        x_list.append(x)
+                        y_list.append(y)
+                elif geometry.ref_line_type == constants.LineType.CIRCULAR_ARC:
+                    s=0.0
+                    s_max=geometry.length
+                    while s < s_max:
+                        x,y=geometry_math.st_to_xy_arc(s,0.0,geometry.x,geometry.y,geometry.hdg,geometry.arc.curvature,geometry.length)
+                        s+=delta_step
+                        point_3d=constants.Point3d()
+                        point_3d.x=x
+                        point_3d.y=y
+                        point_3d.z=0.0
+                        geometry.refline_sample_points.append(point_3d)
+                        x_list.append(x)
+                        y_list.append(y)
+                elif geometry.ref_line_type == constants.LineType.SPIRAL:
+                    s=0.0
+                    s_max=geometry.length
+                    while s < s_max:
+                        x,y=geometry_math.st_to_xy_spiral(s,0.0,geometry.x,geometry.y,geometry.hdg,geometry.length,geometry.spiral.curvStart,geometry.spiral.curvEnd)
+                        s+=delta_step
+                        point_3d=constants.Point3d()
+                        point_3d.x=x
+                        point_3d.y=y
+                        point_3d.z=0.0
+                        geometry.refline_sample_points.append(point_3d) 
+                        x_list.append(x)
+                        y_list.append(y)
+                elif geometry.ref_line_type == constants.LineType.POLY3:
+                    raise NotImplementedError(f"Poly3 is not implemented for road {road.id}")
+                   
+        # plot sample points of all roads
+        logging.info(f'len of x_list:{len(x_list)}, len of y_list:{len(y_list)}')
+        plt.scatter(
+            x_list, y_list,
+            s=2,           # 控制点的大小
+            c='red',       # 控制点的颜色
+            alpha=0.7      # 可选：点的透明度
+        )
+        plt.show()
+
 
