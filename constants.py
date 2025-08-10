@@ -2,12 +2,21 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List
 
+@dataclass
+class Point3d:
+    x:float=0.0
+    y:float=0.0
+    z:float=0.0
 
 class ErrorCode(Enum):
     OK = 0
     FILE_NOT_FOUND = 1
     INVALID_FORMAT = 2
     UNKNOWN = 99
+
+class ContactPoint:
+    START:str="start"
+    END:str="end"
 
 @dataclass
 class Header:
@@ -57,6 +66,7 @@ class Geometry:
     y:float=0.0 # y coordinate
     hdg:float=0.0 # heading
     length:float=0.0 # length
+    sample_points:List[Point3d]=field(default_factory=list) # sample points
 
     straight:Line_Straight=field(default_factory=Line_Straight) # straight parameters
     spiral:Line_Spiral=field(default_factory=Line_Spiral) # spiral parameters
@@ -79,6 +89,22 @@ class Road:
     lateralProfile:dict = field(default_factory=dict)
 
 @dataclass
+class LaneLink:
+    from_lane_id:str=""
+    to_lane_id:str=""
+
+@dataclass
+class Connection:
+    id:str=""
+    name:str=""
+    incomming_road_id:str=""
+    connecting_road_id:str=""
+    contact_point:str=""
+    lane_links:List[LaneLink]=field(default_factory=list)
+
+@dataclass
 class Junction:
     id:str=""
+    name:str=""
+    connections:List[Connection]=field(default_factory=list)
     

@@ -63,6 +63,14 @@ class RoadNetwork:
                 logging.info(f'len of roads parsed:{len(self.odr_doc["roads"])}')
                 logging.info(f'roads[0]:{self.odr_doc["roads"][0]}')
                 logging.info(f'roads[3]:{self.odr_doc["roads"][3]}')
+            
+            # get juntions
+            junction_elements=root.xpath(f'/{self.ROOT_TAG}/junction')
+            logging.info(f'len of junction elements:{len(junction_elements)}')
+            if len(junction_elements)>0:
+                self.odr_doc['junctions']=self._parse_junctions(junction_elements)
+                logging.info(f'len of junctions parsed:{len(self.odr_doc["junctions"])}')
+                logging.info(f'junctions[0]:{self.odr_doc["junctions"][0]}')
 
         except Exception as e:
             logging.error(f"parse xodr file {self.xodr_file} failed: {str(e)}")
@@ -167,3 +175,48 @@ class RoadNetwork:
             
             roads.append(road_obj)
         return roads
+    
+    def _parse_junctions(self, junction_elements:List[etree.Element]) -> List[constants.Junction]:
+        junctions:List[constants.Junction] = []
+        for junction_element in junction_elements:
+            junction_element_tag = junction_element.tag
+            if junction_element_tag != 'junction':
+                logging.error(f"invalid junction element tag: {junction_element_tag}, {etree.tostring(junction_element, pretty_print=True)}")
+                continue
+
+            # get attributes
+            junction_obj = constants.Junction()
+            if 'id' not in junction_element.attrib:
+                logging.error(f"junction element {junction_element_tag} has no id attribute")
+                continue
+            junction_obj.id = junction_element.get('id')
+            junction_obj.name = junction_element.get('name', "")
+
+            # get connections
+            connection_elements=junction_element.xpath('.//connection')
+            for connection_element in connection_elements:
+                # get connection attributes
+                connection=constants.Connection()
+                connection.id=connection_element.get('id')
+                connection.name=connection_element.get('name', "")
+                connection.incomming_road_id=connection_element.get('incomingRoad', "")
+                connection.connecting_road_id=connection_element.get('connectingRoad', "")
+                connection.contact_point=connection_element.get('contactPoint', "")
+
+                # get lane links
+                lane_link_elements=connection_element.xpath('.//laneLink')
+                for lane_link_element in lane_link_elements:
+                    lane_link=constants.LaneLink()
+                    lane_link.from_lane_id=lane_link_element.get('from', "")
+                    lane_link.to_lane_id=lane_link_element.get('to', "")
+                    connection.lane_links.append(lane_link)
+
+                junction_obj.connections.append(connection)
+
+            junctions.append(junction_obj)
+        return junctions
+           
+    
+    def sample_roads(self, delta_step:float=0.1):
+        pass
+
